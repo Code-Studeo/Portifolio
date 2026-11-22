@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#09080e">
+  <meta name="description" content="Galeria 3D de sete projetos web autorais do estúdio Code Studeo.">
+  <title>Code Studeo — Galeria de Projetos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="wordmark" href="#projetos" aria-label="Code Studeo — voltar à galeria"><img class="brand-logo" src="assets/logo-code-studeo.png" alt="Logo Code Studeo"><span class="wordmark-copy"><strong>CODE STUDEO</strong><br>WEB EXPERIENCES</span></a>
+    <nav class="nav" aria-label="Navegação da galeria"><a href="#projetos">PROJETOS <span>07</span></a></nav>
+  </header>
+
+  <main>
+    <section class="work section-pad gallery-page" id="projetos" aria-labelledby="gallery-heading">
+      <div class="section-heading reveal"><div class="eyebrow">GALERIA DE PROJETOS</div><p id="gallery-heading">Explore os estilos e encontre inspiração para o seu site.</p></div>
+      <div class="gallery-shell reveal" id="project-gallery">
+        <div class="gallery-topline"><span>CODE STUDEO <i> / </i> WEB EXPERIENCE</span><span class="gallery-hint">ARRASTE PARA EXPLORAR</span></div>
+        <div class="gallery-stage" id="gallery-stage" tabindex="0" role="region" aria-label="Galeria 3D com sete projetos. Use as setas do teclado para navegar.">
+          <div class="gallery-ambient" aria-hidden="true"></div>
+          <div class="gallery-track" id="project-list" aria-live="off"></div>
+          <button class="gallery-arrow gallery-arrow--prev" type="button" aria-label="Projeto anterior">←</button>
+          <button class="gallery-arrow gallery-arrow--next" type="button" aria-label="Próximo projeto">→</button>
+          <div class="gallery-floor" aria-hidden="true"></div>
+        </div>
+        <div class="gallery-meta" aria-live="polite">
+          <div class="gallery-meta-title"><span class="gallery-current" id="gallery-current">01 <i>/</i> 07</span><h3 id="gallery-title">Forma Arquitetura</h3><p id="gallery-segment">ARQUITETURA</p></div>
+          <a class="gallery-open" id="gallery-open" href="#" target="_blank" rel="noreferrer"><span>ABRIR SITE</span><b>↗</b></a>
+        </div>
+        <div class="gallery-progress" role="progressbar" aria-label="Progresso da galeria" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1"><span id="gallery-progress"></span></div>
+        <div class="gallery-bottomline"><span>← → NAVEGAR</span><span>CLIQUE NOS PROJETOS LATERAIS PARA SELECIONAR</span><span>07 PROJETOS</span></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer"><a class="wordmark" href="#projetos" aria-label="Code Studeo — voltar à galeria"><img class="brand-logo" src="assets/logo-code-studeo.png" alt="Logo Code Studeo"><span class="wordmark-copy"><strong>CODE STUDEO</strong><br>WEB DESIGN</span></a><span>2025 © CODE STUDEO - TODOS OS DIREITOS RESERVADOS.</span><a href="#projetos">VOLTAR AO TOPO ↑</a></footer>
+
+  <script src="portfolio.config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/ScrollTrigger.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
