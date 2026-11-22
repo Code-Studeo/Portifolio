@@ -24,13 +24,13 @@
         ? `<iframe class="gallery-iframe" data-src="${escapeHTML(live)}" title="Preview ao vivo: ${escapeHTML(project.title)}" loading="lazy" tabindex="-1" referrerpolicy="strict-origin-when-cross-origin"></iframe>`
         : `<div class="gallery-art" style="--accent:${escapeHTML(project.accent)}"><span class="gallery-art-ring"></span><strong>${escapeHTML(project.mark).replace(/\n/g, "<br>")}</strong><small>PREVIEW DO SITE NÃO DISPONÍVEL</small></div>`;
     const num = String(index + 1).padStart(2, "0");
-    return `<article class="gallery-item" data-index="${index}" tabindex="0" role="group" aria-label="${num} de ${String(projects.length).padStart(2, "0")}: ${escapeHTML(project.title)}">
+    return `<a class="gallery-item" data-index="${index}" href="${escapeHTML(live || "#")}"${live ? ' target="_blank" rel="noopener noreferrer"' : ' aria-disabled="true" tabindex="-1"'} aria-label="Abrir projeto ${escapeHTML(project.title)} em nova aba">
       <div class="gallery-window"><div class="gallery-window-inner">${media}</div><div class="gallery-window-shade"></div>
         <span class="gallery-card-index">${num} <i>/</i> ${String(projects.length).padStart(2, "0")}</span>
         <span class="gallery-card-label">${escapeHTML(project.title)}<small>${escapeHTML(project.segment)}</small></span>
-        <span class="gallery-card-hint">${live ? "CLIQUE PARA CENTRALIZAR" : "PREVIEW EM CONFIGURAÇÃO"}</span>
+        <span class="gallery-card-hint">${live ? "CLIQUE PARA ABRIR O SITE" : "PREVIEW EM CONFIGURAÇÃO"}</span>
       </div>
-    </article>`;
+    </a>`;
   }).join("");
 
   const currentLabel = document.querySelector("#gallery-current");
@@ -65,12 +65,12 @@
     openLink.href = live || "#";
     if (!live) openLink.removeAttribute("target");
     else openLink.target = "_blank";
+    const mobile = matchMedia("(max-width: 760px)").matches;
     items.forEach((item, itemIndex) => {
       const d = offsetFor(itemIndex);
       const distance = Math.abs(d);
       const direction = Math.sign(d);
       const width = stage.clientWidth;
-      const mobile = matchMedia("(max-width: 700px)").matches;
       const xFactors = mobile ? [0, .60, 1.08, 1.38] : [0, .46, .82, 1.10];
       const scales = mobile ? [1, .72, .50, .34] : [1, .72, .52, .36];
       const depths = [60, -140, -340, -560];
@@ -86,7 +86,9 @@
       frame.style.setProperty("--parallax-x", "0px");
       frame.style.setProperty("--parallax-y", "0px");
       const iframe = item.querySelector(".gallery-iframe");
-      if (iframe && distance <= 2 && !iframe.hasAttribute("src")) iframe.src = iframe.dataset.src;
+      if (iframe && distance === 0 && !iframe.hasAttribute("src")) iframe.src = iframe.dataset.src;
+      else if (iframe && mobile && distance > 0 && iframe.hasAttribute("src")) iframe.removeAttribute("src");
+      else if (iframe && !mobile && distance <= 2 && !iframe.hasAttribute("src")) iframe.src = iframe.dataset.src;
       const position = {
         x: direction * width * xFactors[Math.min(distance, 3)],
         y: distance ? distance * (mobile ? 6 : 8) : 0,
@@ -95,7 +97,7 @@
         rotateZ: direction * (distance ? 1.3 : 0),
         scale: scales[Math.min(distance, 3)],
         opacity: visible ? opacity[Math.min(distance, 3)] : 0,
-        filter: distance > 1 ? `saturate(${Math.max(.35, 1 - distance * .18)}) brightness(${Math.max(.53, 1 - distance * .13)})` : "saturate(1) brightness(1)"
+        filter: mobile ? "none" : distance > 1 ? `saturate(${Math.max(.35, 1 - distance * .18)}) brightness(${Math.max(.53, 1 - distance * .13)})` : "saturate(1) brightness(1)"
       };
       if (window.gsap && !reducedMotion) {
         const transforms = { ...position, xPercent: -50, yPercent: -50 };
@@ -119,15 +121,7 @@
   document.querySelector(".gallery-arrow--prev").addEventListener("click", () => go(-1));
   document.querySelector(".gallery-arrow--next").addEventListener("click", () => go(1));
   track.addEventListener("click", (event) => {
-    if (Date.now() < ignoreClickUntil) { event.preventDefault(); return; }
-    const item = event.target.closest(".gallery-item");
-    if (!item) return;
-    const index = Number(item.dataset.index);
-    if (index !== active) { event.preventDefault(); activate(index); }
-  });
-  track.addEventListener("keydown", (event) => {
-    const item = event.target.closest(".gallery-item");
-    if (item && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); activate(Number(item.dataset.index)); }
+    if (Date.now() < ignoreClickUntil) event.preventDefault();
   });
   stage.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); go(event.key === "ArrowRight" ? 1 : -1); }
@@ -138,7 +132,7 @@
   });
 
   stage.addEventListener("pointerdown", (event) => {
-    if (event.target.closest("button, a")) return;
+    if (event.target.closest("button")) return;
     dragStart = { x: event.clientX, y: event.clientY, id: event.pointerId };
     stage.setPointerCapture(event.pointerId);
     stage.classList.add("gallery-stage--dragging");
@@ -146,7 +140,9 @@
   stage.addEventListener("pointermove", (event) => {
     if (dragStart && event.pointerId === dragStart.id) {
       const dx = event.clientX - dragStart.x;
-      stage.style.setProperty("--drag-x", `${dx * .18}px`);
+      const dy = event.clientY - dragStart.y;
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) { dragStart = null; ignoreClickUntil = Date.now() + 120; stage.classList.remove("gallery-stage--dragging"); return; }
+      if (Math.abs(dx) > 8) stage.style.setProperty("--drag-x", `${dx * .18}px`);
       if (Math.abs(dx) > 65) { go(dx < 0 ? 1 : -1); dragStart = null; ignoreClickUntil = Date.now() + 350; stage.classList.remove("gallery-stage--dragging"); stage.style.removeProperty("--drag-x"); return; }
     }
     if (finePointer && !reducedMotion) {
@@ -187,7 +183,7 @@
   }
   window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => activate(active, false), 120); }, { passive: true });
 
-  if (!window.gsap || !window.ScrollTrigger || reducedMotion) {
+  if (!window.gsap || !window.ScrollTrigger || reducedMotion || matchMedia("(max-width: 760px)").matches) {
     document.querySelectorAll(".reveal").forEach((el) => el.classList.add("is-visible"));
   } else {
     gsap.registerPlugin(ScrollTrigger);
