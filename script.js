@@ -41,6 +41,78 @@
   const progressBar = document.querySelector(".gallery-progress");
   const items = [...track.querySelectorAll(".gallery-item")];
 
+  // The upper wheel is deliberately decorative: its cards are inert and its iframes cannot receive input.
+  const wheel = document.querySelector("#project-wheel");
+  const wheelRing = document.querySelector("#project-wheel-ring");
+  const wheelOrbit = wheel?.querySelector(".wheel-orbit");
+  const wheelCards = projects.map((project, index) => {
+    const live = safeUrl(project.liveUrl);
+    const card = document.createElement("div");
+    card.className = "wheel-card";
+    card.setAttribute("aria-hidden", "true");
+    card.innerHTML = `${live ? `<iframe src="${escapeHTML(live)}" title="" tabindex="-1" loading="lazy" aria-hidden="true" referrerpolicy="strict-origin-when-cross-origin"></iframe>` : ""}<span class="wheel-card-label">${escapeHTML(project.title)}<small>${escapeHTML(project.segment)}</small></span>`;
+    wheelRing.append(card);
+    return card;
+  });
+  let wheelAngle = 0;
+  let wheelArcCache = null;
+  const renderWheel = (degrees = wheelAngle) => {
+    if (!wheel || !wheelCards.length) return;
+    const small = matchMedia("(max-width:760px)").matches;
+    const scene = wheel.querySelector(".wheel-scene");
+    const width = scene.clientWidth;
+    const cardWidth = small ? Math.min(84, Math.max(76, width * .20)) : Math.min(230, Math.max(150, width * .14));
+    const cardHeight = cardWidth * (small ? .68 : .62);
+    const radiusX = Math.min(width * (small ? .46 : .30), width / 2 - cardWidth * .55);
+    const radiusY = Math.min(radiusX * (small ? .92 : .52), scene.clientHeight / 2 - cardHeight * .6);
+    if (!wheelArcCache || wheelArcCache.radiusX !== radiusX || wheelArcCache.radiusY !== radiusY) {
+      const steps = 720;
+      const samples = [{ angle: 0, distance: 0 }];
+      let perimeter = 0;
+      let previousX = 0;
+      let previousY = -radiusY;
+      for (let step = 1; step <= steps; step += 1) {
+        const angle = step / steps * Math.PI * 2;
+        const x = Math.sin(angle) * radiusX;
+        const y = -Math.cos(angle) * radiusY;
+        perimeter += Math.hypot(x - previousX, y - previousY);
+        samples.push({ angle, distance: perimeter });
+        previousX = x;
+        previousY = y;
+      }
+      wheelArcCache = { radiusX, radiusY, perimeter, samples };
+    }
+    wheelRing.style.transform = "none";
+    wheelOrbit.style.width = `${radiusX * 2}px`;
+    wheelOrbit.style.height = `${radiusY * 2}px`;
+    wheelCards.forEach((card, index) => {
+      const target = (((index / wheelCards.length) + degrees / 360) % 1 + 1) % 1 * wheelArcCache.perimeter;
+      let low = 0;
+      let high = wheelArcCache.samples.length - 1;
+      while (low < high) {
+        const middle = (low + high) >> 1;
+        if (wheelArcCache.samples[middle].distance < target) low = middle + 1;
+        else high = middle;
+      }
+      const next = wheelArcCache.samples[low];
+      const previous = wheelArcCache.samples[Math.max(0, low - 1)];
+      const fraction = next.distance === previous.distance ? 0 : (target - previous.distance) / (next.distance - previous.distance);
+      const angle = previous.angle + (next.angle - previous.angle) * fraction;
+      const x = Math.sin(angle) * radiusX;
+      const y = -Math.cos(angle) * radiusY;
+      const depth = Math.sin(angle);
+      const z = depth * (small ? 55 : 115);
+      const scale = .9 + (depth + 1) * .05;
+      card.style.width = `${cardWidth}px`;
+      card.style.height = `${cardHeight}px`;
+      card.style.transform = `translate3d(calc(-50% + ${x}px), calc(-50% + ${y}px), ${z}px) scale(${scale})`;
+      card.style.zIndex = String(Math.round((depth + 1) * 10));
+      card.style.opacity = String(.72 + (depth + 1) * .14);
+    });
+  };
+  renderWheel();
+  window.addEventListener("resize", () => renderWheel(), { passive: true });
+
   function offsetFor(index) {
     const total = projects.length;
     let delta = (index - active + total) % total;
@@ -183,10 +255,16 @@
   }
   window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => activate(active, false), 120); }, { passive: true });
 
+  if (window.gsap && window.ScrollTrigger && !reducedMotion) {
+    gsap.registerPlugin(ScrollTrigger);
+    if (wheel && wheelCards.length) {
+      gsap.to({ angle: 0 }, { angle: 360, ease: "none", onUpdate() { wheelAngle = this.targets()[0].angle; renderWheel(); }, scrollTrigger: { trigger: wheel, start: "top top", end: () => `+=${Math.round(wheel.offsetHeight * 4.5)}`, pin: true, pinSpacing: true, pinReparent: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true } });
+    }
+  }
+
   if (!window.gsap || !window.ScrollTrigger || reducedMotion || matchMedia("(max-width: 760px)").matches) {
     document.querySelectorAll(".reveal").forEach((el) => el.classList.add("is-visible"));
   } else {
-    gsap.registerPlugin(ScrollTrigger);
     const context = gsap.context(() => {
       gsap.utils.toArray(".reveal").forEach((el) => gsap.fromTo(el, { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: .85, ease: "power2.out", scrollTrigger: { trigger: el, start: "top 88%", once: true } }));
       gsap.from(".gallery-topline, .gallery-arrow", { y: 14, opacity: 0, duration: .65, stagger: .08, delay: .18, ease: "power3.out" });
