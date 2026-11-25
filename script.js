@@ -47,10 +47,14 @@
   const wheelOrbit = wheel?.querySelector(".wheel-orbit");
   const wheelCards = projects.map((project, index) => {
     const live = safeUrl(project.liveUrl);
+    const capture = safeImage(project.capture);
     const card = document.createElement("div");
     card.className = "wheel-card";
     card.setAttribute("aria-hidden", "true");
-    card.innerHTML = `${live ? `<iframe src="${escapeHTML(live)}" title="" tabindex="-1" loading="lazy" aria-hidden="true" referrerpolicy="strict-origin-when-cross-origin"></iframe>` : ""}<span class="wheel-card-label">${escapeHTML(project.title)}<small>${escapeHTML(project.segment)}</small></span>`;
+    const media = capture
+      ? `<img src="${escapeHTML(capture)}" alt="" loading="eager" aria-hidden="true">`
+      : live ? `<iframe src="${escapeHTML(live)}" title="" tabindex="-1" loading="lazy" aria-hidden="true" referrerpolicy="strict-origin-when-cross-origin"></iframe>` : "";
+    card.innerHTML = `${media}<span class="wheel-card-label">${escapeHTML(project.title)}<small>${escapeHTML(project.segment)}</small></span>`;
     wheelRing.append(card);
     return card;
   });
