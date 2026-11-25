@@ -54,7 +54,7 @@
     const media = capture
       ? `<img src="${escapeHTML(capture)}" alt="" loading="eager" aria-hidden="true">`
       : live ? `<iframe src="${escapeHTML(live)}" title="" tabindex="-1" loading="lazy" aria-hidden="true" referrerpolicy="strict-origin-when-cross-origin"></iframe>` : "";
-    card.innerHTML = `${media}<span class="wheel-card-label">${escapeHTML(project.title)}<small>${escapeHTML(project.segment)}</small></span>`;
+    card.innerHTML = media;
     wheelRing.append(card);
     return card;
   });
